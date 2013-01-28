@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Net;
+using System.IO;
 
 namespace MegaApi
 {
@@ -58,7 +59,7 @@ namespace MegaApi
             SequenceNumber = new Random().Next();
         }
 
-        public HttpWebRequest GetNextRequest()
+        private HttpWebRequest GetNextRequest()
         {
             UriBuilder ub = new UriBuilder(ApiRequestUrl);
             ub.Query += string.Format("id={0}", SequenceNumber);
@@ -66,9 +67,39 @@ namespace MegaApi
 
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(uri);
             request.Method = "POST";
-            request.ContentType = "text/plain";
+            request.ContentType = "text/plain;charset=UTF-8";
             request.Timeout = 10000;
             return request;
+        }
+
+        public string Execute(Command command)
+        {
+            HttpWebRequest request = GetNextRequest();
+
+            string json = command.ToJson();
+
+            byte[] content = Encoding.UTF8.GetBytes(json);
+
+            request.ContentLength = content.Length;
+
+            using (Stream requestStream = request.GetRequestStream())
+            {
+                requestStream.Write(content, 0, content.Length);
+                requestStream.Close();
+            }
+
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+
+            byte[] responseContent = new byte[response.ContentLength]; 
+
+            using (var responseStream = response.GetResponseStream())
+            {
+                responseStream.Read(responseContent, 0, responseContent.Length);
+                responseStream.Close();
+            }
+
+            string responseString = Encoding.UTF8.GetString(responseContent);
+            return responseString;
         }
     }
 

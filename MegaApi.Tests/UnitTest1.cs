@@ -3,9 +3,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MegaApi;
 using System.Linq;
 using System.Collections.Generic;
-using System.Net;
-using System.Text;
-using System.IO;
 
 namespace MegaApi.Tests
 {
@@ -125,35 +122,11 @@ namespace MegaApi.Tests
         public void TestSession()
         {
             Session session = new Session();
-            HttpWebRequest request = session.GetNextRequest();
-
-            StringBuilder sb = new StringBuilder();
 
             Command login = MakeCommand.Login(TestUserName, TestUserHash);
-            string json = login.ToJson();
 
-            byte[] content = Encoding.ASCII.GetBytes(json);
-
-            request.ContentLength = content.Length;
-
-            using (Stream requestStream = request.GetRequestStream())
-            {
-                requestStream.Write(content, 0, content.Length);
-                requestStream.Close();
-            }
-
-            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-
-            byte[] responseContent = new byte[response.ContentLength]; 
-
-            using (var responseStream = response.GetResponseStream())
-            {
-                responseStream.Read(responseContent, 0, responseContent.Length);
-                responseStream.Close();
-            }
-
-            string actual = Encoding.ASCII.GetString(responseContent);
             string expected = "[-9]"; // -9 is "ENOENT" which means user not found
+            string actual = session.Execute(login);
 
             Assert.AreEqual(actual, expected);
         }
