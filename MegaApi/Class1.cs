@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Net;
 
 namespace MegaApi
 {
@@ -49,6 +50,26 @@ namespace MegaApi
     {
         public int SessionId;
         public int SequenceNumber;
+
+        public static Uri ApiRequestUrl = new Uri("https://g.api.mega.co.nz/cs");
+
+        public Session()
+        {
+            SequenceNumber = new Random().Next();
+        }
+
+        public HttpWebRequest GetNextRequest()
+        {
+            UriBuilder ub = new UriBuilder(ApiRequestUrl);
+            ub.Query += string.Format("id={0}", SequenceNumber);
+            Uri uri = ub.Uri;
+
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(uri);
+            request.Method = "POST";
+            request.ContentType = "text/plain";
+            request.Timeout = 10000;
+            return request;
+        }
     }
 
     public class Command
@@ -61,8 +82,6 @@ namespace MegaApi
 
         private string _command;
         private List<Argument> _arguments = new List<Argument>();
-
-        public static Uri ApiRequestUrl = new Uri("https://g.api.mega.co.nz/sc");
 
         public Command(string command)
         {
@@ -78,13 +97,14 @@ namespace MegaApi
         {
             var sb = new StringBuilder();
 
-            sb.AppendFormat("{ a : '{0}'", _command);
+            // in array of one for now
+            sb.AppendFormat("[{{ \"a\" : \"{0}\"", _command);
             foreach (var arg in _arguments)
             {
                 // need to quote strings only?
-                sb.AppendFormat(", {0} : '{1}'", arg.name, arg.value);
+                sb.AppendFormat(", \"{0}\" : \"{1}\"", arg.name, arg.value);
             }
-            sb.Append(" }");
+            sb.Append(" }]");
             return sb.ToString();
         }
     }
@@ -129,11 +149,11 @@ namespace MegaApi
 
         private static string _UpdateUser = "uu";
 
-        public static Command Login(string user, string uh)
+        public static Command Login(string user, string hash)
         {
-            var command = new Command(_UpdateUser);
+            var command = new Command(_UpdateStatus);
             command.AddArgument("user", user);
-            command.AddArgument("uh", uh);
+            command.AddArgument("uh", hash);
             return command;
         }
     }
