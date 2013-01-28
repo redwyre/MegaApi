@@ -2,12 +2,55 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MegaApi;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace MegaApi.Tests
 {
     [TestClass]
     public class UnitTest1
     {
+        public static bool CompareTables<T>(T[] arr1, T[] arr2)
+        {
+            if (arr1.Length != arr2.Length) return false;
+
+            for (int i = 0; i < arr1.Length; ++i)
+            {
+                if (!Comparer<T>.Equals(arr1[i], arr2[i]))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public static bool CompareTables<T>(T[][] arr1, T[][] arr2)
+        {
+            if (arr1.Length != arr2.Length) return false;
+
+            for (int i = 0; i < arr1.Length; ++i)
+            {
+                if (!CompareTables(arr1[i], arr2[i]))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public static bool CompareTables<T>(T[][][] arr1, T[][][] arr2)
+        {
+            if (arr1.Length != arr2.Length) return false;
+
+            for (int i = 0; i < arr1.Length; ++i)
+            {
+                if (!CompareTables(arr1[i], arr2[i]))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         [TestMethod]
         public void Test_str_to_a32()
         {
@@ -68,7 +111,7 @@ namespace MegaApi.Tests
 
             var actual = Sjcl.Cipher.Aes._tables;
 
-            Assert.IsTrue(Enumerable.SequenceEqual(expected, actual));
+            Assert.IsTrue(CompareTables(expected, actual));
         }
     }
 }
