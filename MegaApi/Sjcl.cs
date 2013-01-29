@@ -13,56 +13,63 @@ namespace MegaApi
             {
                 public static uint[][][] _tables = new uint[][][] { new uint[][] { new uint[256], new uint[256], new uint[256], new uint[256], new uint[256] }, new uint[][] { new uint[256], new uint[256], new uint[256], new uint[256], new uint[256] } };
 
-                uint[][] _key;
+                public uint[][] _key;
 
                 public Aes(uint[] key)
                 {
-                    //int i, j;
-                    //    uint tmp;
-                    //uint[] encKey, decKey;
-                    //uint sbox = _tables[0][4];
-                    //var decTable = _tables[1];
-                    //int keyLen = key.Length;
-                    //int rcon = 1;
+                    int i, j;
+                    uint tmp;
+                    uint[] sbox = _tables[0][4];
+                    var decTable = _tables[1];
+                    int keyLen = key.Length;
+                    uint rcon = 1;
+                    uint[] encKey = new uint[4 * keyLen + 28];
+                    uint[] decKey = new uint[4 * keyLen + 28];
 
-                    //if (keyLen != 4 && keyLen != 6 && keyLen != 8) {
-                    //    throw new Exception("invalid aes key size");
-                    //}
-                    //encKey = key.ToArray();
-                    //decKey = new uint[]{};
-                    //this._key = new uint[][]{encKey, decKey};
+                    if (keyLen != 4 && keyLen != 6 && keyLen != 8)
+                    {
+                        throw new Exception("invalid aes key size");
+                    }
+                    Array.Copy(key, 0, encKey, 0, keyLen);
+                    this._key = new uint[][] { encKey, decKey };
 
-                    //// schedule encryption keys
-                    //for (i = keyLen; i < 4 * keyLen + 28; i++) {
-                    //    tmp = encKey[i - 1];
+                    // schedule encryption keys
+                    for (i = keyLen; i < 4 * keyLen + 28; i++)
+                    {
+                        tmp = encKey[i - 1];
 
-                    //    // apply sbox
-                    //    if (i % keyLen == 0 || (keyLen == 8 && i % keyLen == 4))
-                    //    {
-                    //        tmp = sbox[tmp >> 24] << 24 ^ sbox[tmp >> 16 & 255] << 16 ^ sbox[tmp >> 8 & 255] << 8 ^ sbox[tmp & 255];
+                        // apply sbox
+                        if (i % keyLen == 0 || (keyLen == 8 && i % keyLen == 4))
+                        {
+                            tmp = sbox[tmp >> 24] << 24 ^ sbox[tmp >> 16 & 255] << 16 ^ sbox[tmp >> 8 & 255] << 8 ^ sbox[tmp & 255];
 
-                    //        // shift rows and add rcon
-                    //        if (i % keyLen === 0) {
-                    //            tmp = tmp << 8 ^ tmp >>> 24 ^ rcon << 24;
-                    //            rcon = rcon << 1 ^ (rcon >> 7) * 283;
-                    //        }
-                    //    }
+                            // shift rows and add rcon
+                            if ((i % keyLen) == 0)
+                            {
+                                tmp = (tmp << 8) ^ (tmp >> 24) ^ (rcon << 24);
+                                rcon = rcon << 1 ^ (rcon >> 7) * 283;
+                            }
+                        }
 
-                    //    encKey[i] = encKey[i - keyLen] ^ tmp;
-                    //}
+                        encKey[i] = encKey[i - keyLen] ^ tmp;
+                    }
 
-                    //// schedule decryption keys
-                    //for (j = 0; i; j++, i--) {
-                    //    tmp = encKey[j & 3 ? i : i - 4];
-                    //    if (i <= 4 || j < 4) {
-                    //        decKey[j] = tmp;
-                    //    } else {
-                    //        decKey[j] = decTable[0][sbox[tmp >>> 24]] ^
-                    //                    decTable[1][sbox[tmp >> 16 & 255]] ^
-                    //                    decTable[2][sbox[tmp >> 8 & 255]] ^
-                    //                    decTable[3][sbox[tmp & 255]];
-                    //    }
-                    //}
+                    // schedule decryption keys
+                    for (j = 0; i != 0; j++, i--)
+                    {
+                        tmp = encKey[(j & 3) != 0 ? i : i - 4];
+                        if (i <= 4 || j < 4)
+                        {
+                            decKey[j] = tmp;
+                        }
+                        else
+                        {
+                            decKey[j] = decTable[0][sbox[tmp >> 24]] ^
+                                        decTable[1][sbox[tmp >> 16 & 255]] ^
+                                        decTable[2][sbox[tmp >> 8 & 255]] ^
+                                        decTable[3][sbox[tmp & 255]];
+                        }
+                    }
                 }
 
                 static Aes()

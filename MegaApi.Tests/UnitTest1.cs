@@ -76,18 +76,6 @@ namespace MegaApi.Tests
             Assert.IsTrue(CompareTables(expected, actual));
         }
 
-        [TestMethod]
-        public void TestAes()
-        {
-            uint[] key = new uint[] { 1, 2, 3, 4 };
-            uint[] data = new uint[] { 5, 6, 7, 8 };
-            uint[] expected = new uint[] { 0x6A8FC678, 0xF71305CA, 0xACC4BE7, 0x58158314 };
-
-            var aes = new Crypto.Aes(key);
-            uint[] actual = aes.Encrypt(data);
-
-            Assert.IsTrue(CompareTables(expected, actual));
-        }
 
         [TestMethod]
         public void TestAesTables()
@@ -118,6 +106,33 @@ namespace MegaApi.Tests
             Assert.IsTrue(CompareTables(expected, actual));
         }
 
+        [TestMethod]
+        public void TestAesCtor()
+        {
+            uint[] key = new uint[] { 1, 2, 3, 4 };
+            uint[][] expected = new uint[][] {
+                new uint[] {0x1,0x2,0x3,0x4,0x6263F262,0x6263F260,0x6263F263,0x6263F267,0x9BEA77C8,0xF98985A8,0x9BEA77CB,0xF98985AC,0x387DE651,0xC1F463F9,0x5A1E1432,0xA397919E,0xB8FCED5B,0x79088EA2,0x23169A90,0x80810B0E,0xA4D74696,0xDDDFC834,0xFEC952A4,0x7E4859AA,0xD61CEA65,0xBC32251,0xF50A70F5,0x8B42295F,0xBAB92558,0xB17A0709,0x447077FC,0xCF325EA3,0x19E12FD2,0xA89B28DB,0xECEB5F27,0x23D90184,0x379D70F4,0x9F06582F,0x73ED0708,0x5034068C,0x19F214A7,0x86F44C88,0xF5194B80,0xA52D4D0C},
+                new uint[] {0x19F214A7,0xA52D4D0C,0xF5194B80,0x86F44C88,0x3AA62193,0x4599526,0xEAEEA732,0x58C1582F,0x7873BBE,0xEEB73214,0xB22FFF1D,0x626779BC,0x5590368D,0x5C98CD09,0xD04886A1,0x65E04202,0xF24F44BC,0x8CD04BA8,0xB5A8C4A3,0x3070748F,0x2B3D9421,0x39788F0B,0x85D8B02C,0xC23F3033,0x5C57F60F,0xBCA03F27,0x47E7801F,0xE902A412,0xC4C3E510,0xFB47BF38,0xAEE5240D,0xB555521D,0xA76B02,0x55A29B35,0x1BB07610,0x7196B70D,0x632BCA13,0x4E12ED25,0x6A26C11D,0x7131DC0F,0x1,0x4,0x3,0x2}
+            };
+            var aes = new Sjcl.Cipher.Aes(key);
+
+            uint[][] actual = aes._key;
+
+            Assert.IsTrue(CompareTables(expected, actual));
+        }
+
+        [TestMethod]
+        public void TestAesEncrypt()
+        {
+            uint[] key = new uint[] { 1, 2, 3, 4 };
+            uint[] data = new uint[] { 5, 6, 7, 8 };
+            uint[] expected = new uint[] { 0x6A8FC678, 0xF71305CA, 0xACC4BE7, 0x58158314 };
+
+            var aes = new Crypto.Aes(key);
+            uint[] actual = aes.Encrypt(data);
+
+            Assert.IsTrue(CompareTables(expected, actual));
+        }
         [TestMethod]
         public void TestSession()
         {
