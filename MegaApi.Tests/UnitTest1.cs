@@ -128,7 +128,7 @@ namespace MegaApi.Tests
             uint[] data = new uint[] { 5, 6, 7, 8 };
             uint[] expected = new uint[] { 0x6A8FC678, 0xF71305CA, 0xACC4BE7, 0x58158314 };
 
-            var aes = new Crypto.Aes(key);
+            var aes = new Sjcl.Cipher.Aes(key);
             uint[] actual = aes.Encrypt(data);
 
             Assert.IsTrue(CompareTables(expected, actual));

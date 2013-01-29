@@ -15,6 +15,52 @@ namespace MegaApi
 
                 public uint[][] _key;
 
+                static Aes()
+                {
+                    var encTable = _tables[0];
+                    var decTable = _tables[1];
+                    var sbox = encTable[4];
+                    var sboxInv = decTable[4];
+                    uint x, xInv;
+                    uint[] d = new uint[256];
+                    uint[] th = new uint[256];
+                    uint x2, x4, x8, s;
+                    uint tEnc, tDec;
+
+                    // Compute double and third tables
+                    for (uint i = 0; i < 256; i++)
+                    {
+                        d[i] = i << 1 ^ (i >> 7) * 283;
+                        th[d[i] ^ i] = i;
+                    }
+
+                    for (x = xInv = 0; sbox[x] == 0; x ^= (x2 != 0 ? x2 : 1), xInv = (th[xInv] != 0 ? th[xInv] : 1))
+                    {
+                        // Compute sbox
+                        s = xInv ^ xInv << 1 ^ xInv << 2 ^ xInv << 3 ^ xInv << 4;
+                        s = s >> 8 ^ s & 255 ^ 99;
+                        sbox[x] = s;
+                        sboxInv[s] = x;
+
+                        // Compute MixColumns
+                        x8 = d[x4 = d[x2 = d[x]]];
+                        tDec = x8 * 0x1010101 ^ x4 * 0x10001 ^ x2 * 0x101 ^ x * 0x1010100;
+                        tEnc = d[s] * 0x101 ^ s * 0x1010100;
+
+                        for (int i = 0; i < 4; i++)
+                        {
+                            encTable[i][x] = tEnc = tEnc << 24 ^ tEnc >> 8;
+                            decTable[i][s] = tDec = tDec << 24 ^ tDec >> 8;
+                        }
+                    }
+
+                    //// Compactify.  Considerable speedup on Firefox.
+                    //for (int i = 0; i < 5; i++) {
+                    //    encTable[i] = encTable[i].slice(0);
+                    //    decTable[i] = decTable[i].slice(0);
+                    //}
+                }
+
                 public Aes(uint[] key)
                 {
                     int i, j;
@@ -72,50 +118,61 @@ namespace MegaApi
                     }
                 }
 
-                static Aes()
+                public uint[] Encrypt(uint[] data) { return this.Crypt(data, 0); }
+
+                public uint[] Decrypt(uint[] data) { return this.Crypt(data, 1); }
+
+                public uint[] Crypt(uint[] input, int dir)
                 {
-                    var encTable = _tables[0];
-                    var decTable = _tables[1];
-                    var sbox = encTable[4];
-                    var sboxInv = decTable[4];
-                    uint x, xInv;
-                    uint[] d = new uint[256];
-                    uint[] th = new uint[256];
-                    uint x2, x4, x8, s;
-                    uint tEnc, tDec;
-
-                    // Compute double and third tables
-                    for (uint i = 0; i < 256; i++)
+                    if (input.Length != 4)
                     {
-                        d[i] = i << 1 ^ (i >> 7) * 283;
-                        th[d[i] ^ i] = i;
+                        throw new Exception("invalid aes block size");
                     }
 
-                    for (x = xInv = 0; sbox[x] == 0; x ^= (x2 != 0 ? x2 : 1), xInv = (th[xInv] != 0 ? th[xInv] : 1))
+                    var key = this._key[dir];
+                    // state variables a,b,c,d are loaded with pre-whitened data
+                    uint a = input[0] ^ key[0];
+                    uint b = input[(dir != 0) ? 3 : 1] ^ key[1];
+                    uint c = input[2] ^ key[2];
+                    uint d = input[(dir != 0) ? 1 : 3] ^ key[3];
+                    uint a2, b2, c2;
+
+                    int nInnerRounds = key.Length / 4 - 2;
+                    uint kIndex = 4;
+                    uint[] outBuffer = new uint[] { 0, 0, 0, 0 };
+                    var table = _tables[dir];
+
+                    // load up the tables
+                    var t0 = table[0];
+                    var t1 = table[1];
+                    var t2 = table[2];
+                    var t3 = table[3];
+                    uint[] sbox = table[4];
+
+                    // Inner rounds.  Cribbed from OpenSSL.
+                    for (int i = 0; i < nInnerRounds; i++)
                     {
-                        // Compute sbox
-                        s = xInv ^ xInv << 1 ^ xInv << 2 ^ xInv << 3 ^ xInv << 4;
-                        s = s >> 8 ^ s & 255 ^ 99;
-                        sbox[x] = s;
-                        sboxInv[s] = x;
-
-                        // Compute MixColumns
-                        x8 = d[x4 = d[x2 = d[x]]];
-                        tDec = x8 * 0x1010101 ^ x4 * 0x10001 ^ x2 * 0x101 ^ x * 0x1010100;
-                        tEnc = d[s] * 0x101 ^ s * 0x1010100;
-
-                        for (int i = 0; i < 4; i++)
-                        {
-                            encTable[i][x] = tEnc = tEnc << 24 ^ tEnc >> 8;
-                            decTable[i][s] = tDec = tDec << 24 ^ tDec >> 8;
-                        }
+                        a2 = t0[a >> 24] ^ t1[b >> 16 & 255] ^ t2[c >> 8 & 255] ^ t3[d & 255] ^ key[kIndex];
+                        b2 = t0[b >> 24] ^ t1[c >> 16 & 255] ^ t2[d >> 8 & 255] ^ t3[a & 255] ^ key[kIndex + 1];
+                        c2 = t0[c >> 24] ^ t1[d >> 16 & 255] ^ t2[a >> 8 & 255] ^ t3[b & 255] ^ key[kIndex + 2];
+                        d = t0[d >> 24] ^ t1[a >> 16 & 255] ^ t2[b >> 8 & 255] ^ t3[c & 255] ^ key[kIndex + 3];
+                        kIndex += 4;
+                        a = a2; b = b2; c = c2;
                     }
 
-                    //// Compactify.  Considerable speedup on Firefox.
-                    //for (int i = 0; i < 5; i++) {
-                    //    encTable[i] = encTable[i].slice(0);
-                    //    decTable[i] = decTable[i].slice(0);
-                    //}
+                    // Last round.
+                    for (int i = 0; i < 4; i++)
+                    {
+                        outBuffer[(dir != 0) ? 3 & -i : i] =
+                          sbox[a >> 24] << 24 ^
+                          sbox[b >> 16 & 255] << 16 ^
+                          sbox[c >> 8 & 255] << 8 ^
+                          sbox[d & 255] ^
+                          key[kIndex++];
+                        a2 = a; a = b; b = c; c = d; d = a2;
+                    }
+
+                    return outBuffer;
                 }
             }
         }

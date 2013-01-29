@@ -10,103 +10,6 @@ namespace MegaApi
 {
     public static class Crypto
     {
-        public class Aes
-        {
-            uint[] _key;
-
-            public static byte[] BigEUintToByte(uint[] bigdata)
-            {
-                // stupid but trying to use the same data as the website
-                // convert 4 big endian uints to little endian byte array
-
-                byte[] data = new byte[16];
-
-                byte[] le0 = BitConverter.GetBytes(bigdata[0]);
-                byte[] le1 = BitConverter.GetBytes(bigdata[1]);
-                byte[] le2 = BitConverter.GetBytes(bigdata[2]);
-                byte[] le3 = BitConverter.GetBytes(bigdata[3]);
-                //Array.Reverse(le0);
-                //Array.Reverse(le1);
-                //Array.Reverse(le2);
-                //Array.Reverse(le3);
-
-                Array.Copy(le0, 0, data, 0, 4);
-                Array.Copy(le1, 0, data, 4, 4);
-                Array.Copy(le2, 0, data, 8, 4);
-                Array.Copy(le3, 0, data, 12, 4);
-
-                return data;
-            }
-
-            public static uint[] ByteToBigEUint(byte[] littledata)
-            {
-                // stupid but trying to use the same data as the website
-                // convert 4 big endian uints to little endian byte array
-
-                uint[] data = new uint[4];
-
-                byte[] le0 = new byte[4];
-                byte[] le1 = new byte[4];
-                byte[] le2 = new byte[4];
-                byte[] le3 = new byte[4];
-
-                Array.Copy(littledata, 0, le0, 0, 4);
-                Array.Copy(littledata, 4, le1, 0, 4);
-                Array.Copy(littledata, 8, le2, 0, 4);
-                Array.Copy(littledata, 12, le3, 0, 4);
-                //Array.Reverse(le0);
-                //Array.Reverse(le1);
-                //Array.Reverse(le2);
-                //Array.Reverse(le3);
-
-                data[0] = BitConverter.ToUInt32(le0, 0);
-                data[1] = BitConverter.ToUInt32(le1, 0);
-                data[2] = BitConverter.ToUInt32(le2, 0);
-                data[3] = BitConverter.ToUInt32(le3, 0);
-
-                return data;
-            }
-
-            public Aes(uint[] key)
-            {
-                _key = key;
-            }
-
-            public uint[] Encrypt(uint[] bigdata)
-            {
-                byte[] data = BigEUintToByte(bigdata);
-                byte[] encrypted;
-
-                using (var aesAlg = new AesManaged())
-                {
-                    aesAlg.Key = BigEUintToByte(_key);
-                    //aesAlg.IV = IV;
-
-                    // Create a decrytor to perform the stream transform.
-                    ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
-
-                    // Create the streams used for encryption.
-                    using (MemoryStream msEncrypt = new MemoryStream())
-                    {
-                        using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
-                        {
-                            using (BinaryWriter swEncrypt = new BinaryWriter(csEncrypt))
-                            {
-
-                                //Write all data to the stream.
-                                swEncrypt.Write(data);
-                            }
-                            encrypted = msEncrypt.ToArray();
-                        }
-                    }
-                }
-
-
-                // Return the encrypted bytes from the memory stream.
-                return ByteToBigEUint(encrypted);
-            }
-        }
-
         public static uint[] prepare_key_pw(string password)
         {
             return prepare_key(str_to_a32(password));
@@ -132,10 +35,7 @@ namespace MegaApi
                         }
                     }
 
-                    //var aes = new sjcl.cipher.aes(key);
-                    //pkey = aes.encrypt(pkey);
-
-                    var aes = new Aes(key);
+                    var aes = new Sjcl.Cipher.Aes(key);
                     pkey = aes.Encrypt(pkey);
 		        }
 	        }
