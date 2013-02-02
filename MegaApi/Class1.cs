@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net;
 using System.IO;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace MegaApi
 {
@@ -100,7 +102,11 @@ namespace MegaApi
 
             string responseString = Encoding.UTF8.GetString(responseContent);
 
-            command.OnCallback(responseString);
+            JArray a = JArray.Parse(responseString);
+
+            JToken t = a[0];
+
+            command.OnCallback(t);
 
             return responseString;
         }
@@ -114,16 +120,19 @@ namespace MegaApi
             public string value;
         }
 
-        public delegate void CallBack(string result);
+        public delegate void SuccessCallBack(JToken result);
+        public delegate void ErrorCallBack(Error error);
 
         private string _command;
         private List<Argument> _arguments = new List<Argument>();
-        private CallBack _callBack;
+        private SuccessCallBack _successCallBack;
+        private ErrorCallBack _errorCallBack;
 
-        public Command(string command, CallBack callBack = null)
+        public Command(string command, SuccessCallBack successCallBack = null, ErrorCallBack errorCallBack = null)
         {
             _command = command;
-            _callBack = callBack;
+            _successCallBack = successCallBack;
+            _errorCallBack = errorCallBack;
         }
 
         public void AddArgument(string name, string value)
@@ -146,53 +155,88 @@ namespace MegaApi
             return sb.ToString();
         }
 
-        public void OnCallback(string result)
+        public void OnCallback(JToken result)
         {
-            if (_callBack != null)
+            if (result.Type == JTokenType.Integer)
             {
-                _callBack(result);
+                Error error = (Error)(int)result;
+
+                if (_errorCallBack != null)
+                {
+                    _errorCallBack(error);
+                }
+            }
+            else
+            {
+                if (_successCallBack != null)
+                {
+                    _successCallBack(result);
+                }
             }
         }
+    }
+
+    public class LoginResonse
+    {
+        public string csid;
+        public string privk; // private key
+        public string k;
     }
 
     public static class MakeCommand
     {
         // 3 Client-server request reference
         // 3.1 Filesystem operations
-        private static string _RetrieveFolderOrUserNodes = "f"; // Returns the contents of the requested folder, or a full view of the requesting user's three filesystem trees, contact list, incoming shares and pending share key requests.
-        private static string _AddOrCopyNewNode = "p"; // Adds new nodes. Copies existing files and adds completed uploads to a user's filesystem.
-        private static string _DeleteNode = "d"; // Deletes a node, including all of its subnodes.
-        private static string _MoveNode = "m"; // Moves a node to a new parent node.
-        private static string _SetNodeAttributes = "a"; // Updates the encrypted node attributes object.
-        private static string _CreateOrDeletePublicHandle = "l"; // Enables or disables the public handle for a node.
-        private static string _CreateOrModifyOrDeleteOutgoingShare = "s"; // Controls the sharing status of a node.
-        private static string _KeyHandling = "k"; // Responds to or requests the following types of key processing:
+        private static readonly string _RetrieveFolderOrUserNodes = "f"; // Returns the contents of the requested folder, or a full view of the requesting user's three filesystem trees, contact list, incoming shares and pending share key requests.
+        private static readonly string _AddOrCopyNewNode = "p"; // Adds new nodes. Copies existing files and adds completed uploads to a user's filesystem.
+        private static readonly string _DeleteNode = "d"; // Deletes a node, including all of its subnodes.
+        private static readonly string _MoveNode = "m"; // Moves a node to a new parent node.
+        private static readonly string _SetNodeAttributes = "a"; // Updates the encrypted node attributes object.
+        private static readonly string _CreateOrDeletePublicHandle = "l"; // Enables or disables the public handle for a node.
+        private static readonly string _CreateOrModifyOrDeleteOutgoingShare = "s"; // Controls the sharing status of a node.
+        private static readonly string _KeyHandling = "k"; // Responds to or requests the following types of key processing:
         // cr - Set or request share/node keys
         // sr - Set share keys (in response to a share key request)
         // nk - Set node keys
 
 
         // 3.2 Account operations
-        private static string _AddOrUpdateUser = "up"; // Adds a new user, upgrades an existing user or sets/modifies a user's credentials.
-        private static string _GetUser = "ug"; // Retrieves user details.
-        private static string _RetrieveUsersPublicKey = "uk"; // Retrieves a user's RSA public key.
-        private static string _AddOrUpdateOrDeleteContract = "ur"; // Modifes the contact status of a given user.
-        private static string _InviteUser = "ui"; // Sends invitation e-mail to a user.
-        private static string _SendConfirmationEmail = "uc"; // Triggers the confirmation link to be sent to the registering user.
-        private static string _ObtainUserDetailsByInvitationCode = "uv"; // Retrieves user details based on the invitation code.
-        private static string _VerifyEmailedConfirmationCode = "ud"; // Upgrades an account's status based on the the given confirmation code.
+        private static readonly string _AddOrUpdateUser = "up"; // Adds a new user, upgrades an existing user or sets/modifies a user's credentials.
+        private static readonly string _GetUser = "ug"; // Retrieves user details.
+        private static readonly string _RetrieveUsersPublicKey = "uk"; // Retrieves a user's RSA public key.
+        private static readonly string _AddOrUpdateOrDeleteContract = "ur"; // Modifes the contact status of a given user.
+        private static readonly string _InviteUser = "ui"; // Sends invitation e-mail to a user.
+        private static readonly string _SendConfirmationEmail = "uc"; // Triggers the confirmation link to be sent to the registering user.
+        private static readonly string _ObtainUserDetailsByInvitationCode = "uv"; // Retrieves user details based on the invitation code.
+        private static readonly string _VerifyEmailedConfirmationCode = "ud"; // Upgrades an account's status based on the the given confirmation code.
 
-        private static string _LoginSessionChallengeOrResponse = "us"; // Establishes a user session based on the response to a cryptographic challenge.
-        private static string _ListUserSessions = "usl"; // Retrieves the user's session history.
-        private static string _UserQuotaDetails = "uq"; // Returns the current quota and resource utilization for the user and for the requesting IP address.
+        private static readonly string _LoginSessionChallengeOrResponse = "us"; // Establishes a user session based on the response to a cryptographic challenge.
+        private static readonly string _ListUserSessions = "usl"; // Retrieves the user's session history.
+        private static readonly string _UserQuotaDetails = "uq"; // Returns the current quota and resource utilization for the user and for the requesting IP address.
         
         // Used by web site
-        private static string _UserUpdate = "uu";
+        private static readonly string _UserUpdate = "uu";
 
         public static Command Login(string user, string hash)
         {
-            Command.CallBack callback = (string result) => { Console.WriteLine(result); };
-            var command = new Command(_LoginSessionChallengeOrResponse, callback);
+            Command.SuccessCallBack successCallBack = (JToken result) =>
+            {
+                LoginResonse l = result.ToObject<LoginResonse>();
+                Console.WriteLine(l);
+            };
+            Command.ErrorCallBack errorCallBack = (Error result) =>
+            {
+                switch (result)
+                {
+                case Error.ENOENT:
+                    Console.WriteLine("ENOENT");
+                    break;
+                default:
+                    Console.WriteLine(result);
+                    break;
+                }
+            };
+            var command = new Command(_LoginSessionChallengeOrResponse, successCallBack, errorCallBack);
             command.AddArgument("user", user);
             command.AddArgument("uh", hash);
             return command;
