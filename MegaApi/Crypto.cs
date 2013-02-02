@@ -37,10 +37,10 @@ namespace MegaApi
 
                     var aes = new Sjcl.Cipher.Aes(key);
                     pkey = aes.Encrypt(pkey);
-		        }
-	        }
+                }
+            }
 
-	        return pkey;
+            return pkey;
         }
 
         // string to array of 32-bit words (big endian)
@@ -54,6 +54,42 @@ namespace MegaApi
             }
 
             return a;
+        }
+
+        // array of 32-bit words to string (big endian)
+        public static byte[] a32_to_str(uint[] a)
+        {
+            List<byte> str = new List<byte>(a.Length / 4);
+
+            for (var i = 0; i < a.Length * 4; i++)
+            {
+                str.Add((byte)((a[i >> 2] >> (24 - (i & 3) * 8)) & 255));
+            }
+
+            return str.ToArray();
+        }
+
+        public static string stringhash(string s, Sjcl.Cipher.Aes aes)
+        {
+            var s32 = str_to_a32(s);
+            var h32 = new uint[] { 0, 0, 0, 0 };
+
+            for (int i = 0; i < s32.Length; i++) { h32[i & 3] ^= s32[i]; }
+
+            for (int i = 16384; (i--) != 0; ) { h32 = aes.Encrypt(h32); }
+
+            return a32_to_base64(new uint[] { h32[0], h32[2] });
+        }
+
+        public static string a32_to_base64(uint[] a)
+        {
+            return base64urlencode(a32_to_str(a));
+        }
+
+        public static string base64urlencode(byte[] bytes)
+        {
+            string ss = Convert.ToBase64String(bytes);
+            return ss.Replace('+', '-').Replace('/', '_').Replace("=", "");
         }
     }
 }

@@ -51,8 +51,9 @@ namespace MegaApi.Tests
             return true;
         }
 
-        static readonly string TestUserName = "test@example.com";
-        static readonly string TestUserHash = "LeNjapk9y60"; // "testtesttest"
+        static readonly string TestUserName = "email@example.com";
+        static readonly string TestUserPass = "asdfgsasdfgt";
+        static readonly string TestUserHash = "asdasdgdfg";
 
         [TestMethod]
         public void Test_str_to_a32()
@@ -66,7 +67,51 @@ namespace MegaApi.Tests
         }
 
         [TestMethod]
-        public void TestGenerateKeyPw()
+        public void Test_a32_to_str()
+        {
+            uint[] input = new uint[] { 0x74657374 };
+            byte[] expected = new byte[] { 0x74, 0x65, 0x73, 0x74 };
+
+            byte[] actual = Crypto.a32_to_str(input);
+
+            Assert.IsTrue(CompareTables(expected, actual));
+        }
+
+        [TestMethod]
+        public void Test_base64urlencode()
+        {
+            byte[] input = new byte[] { 0x74, 0x65, 0x73, 0x74, 0x74, 0x65, 0x73, 0x74, 0x74, 0x65, 0x73, 0x74 }; // "testtesttest"
+            string expected = "dGVzdHRlc3R0ZXN0";
+
+            string actual = Crypto.base64urlencode(input);
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void Test_a32_to_base64()
+        {
+            uint[] a32 = new uint[] { 0x74657374 };
+            string expected = "dGVzdA";
+
+            string actual = Crypto.a32_to_base64(a32);
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void Test_prepare_key()
+        {
+            uint[] key = new uint[] { 1, 2, 3, 4 };
+            uint[] expected = new uint[] { 0xF223D8D4, 0xE9F12172, 0x4B3CB51B, 0xB81D515C };
+
+            uint[] actual = Crypto.prepare_key(key);
+
+            Assert.IsTrue(CompareTables(expected, actual));
+        }
+
+        [TestMethod]
+        public void Test_prepare_key_pw()
         {
             string pass = "test";
             uint[] expected = new uint[] { 0xBDB14516, 0xFEC014CD, 0xB97ADCE4, 0x1572ECF4 };
@@ -76,6 +121,17 @@ namespace MegaApi.Tests
             Assert.IsTrue(CompareTables(expected, actual));
         }
 
+        [TestMethod]
+        public void Test_stringhash()
+        {
+            var aes = new Sjcl.Cipher.Aes(Crypto.prepare_key_pw(TestUserPass));
+            string input = TestUserName.ToLower();
+
+            string expected = TestUserHash;
+            string actual = Crypto.stringhash(input, aes);
+
+            Assert.AreEqual(actual, expected);
+        }
 
         [TestMethod]
         public void TestAesTables()
@@ -133,12 +189,30 @@ namespace MegaApi.Tests
 
             Assert.IsTrue(CompareTables(expected, actual));
         }
+
         [TestMethod]
-        public void TestSession()
+        public void TestSessionLogin()
         {
             Session session = new Session();
 
             Command login = MakeCommand.Login(TestUserName, TestUserHash);
+
+            string expected = "[-9]"; // -9 is "ENOENT" which means user not found
+            string actual = session.Execute(login);
+
+            Assert.AreNotEqual(actual, expected);
+        }
+
+        [TestMethod]
+        public void TestSessionLoginFull()
+        {
+            Session session = new Session();
+
+            var aes = new Sjcl.Cipher.Aes(Crypto.prepare_key_pw(TestUserPass));
+
+            string hash = Crypto.stringhash(TestUserName, aes);
+
+            Command login = MakeCommand.Login(TestUserName, hash);
 
             string expected = "[-9]"; // -9 is "ENOENT" which means user not found
             string actual = session.Execute(login);

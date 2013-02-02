@@ -99,6 +99,9 @@ namespace MegaApi
             }
 
             string responseString = Encoding.UTF8.GetString(responseContent);
+
+            command.OnCallback(responseString);
+
             return responseString;
         }
     }
@@ -111,12 +114,16 @@ namespace MegaApi
             public string value;
         }
 
+        public delegate void CallBack(string result);
+
         private string _command;
         private List<Argument> _arguments = new List<Argument>();
+        private CallBack _callBack;
 
-        public Command(string command)
+        public Command(string command, CallBack callBack = null)
         {
             _command = command;
+            _callBack = callBack;
         }
 
         public void AddArgument(string name, string value)
@@ -137,6 +144,14 @@ namespace MegaApi
             }
             sb.Append(" }]");
             return sb.ToString();
+        }
+
+        public void OnCallback(string result)
+        {
+            if (_callBack != null)
+            {
+                _callBack(result);
+            }
         }
     }
 
@@ -170,19 +185,14 @@ namespace MegaApi
         private static string _LoginSessionChallengeOrResponse = "us"; // Establishes a user session based on the response to a cryptographic challenge.
         private static string _ListUserSessions = "usl"; // Retrieves the user's session history.
         private static string _UserQuotaDetails = "uq"; // Returns the current quota and resource utilization for the user and for the requesting IP address.
-
-        // 4 Server-client request reference
-
-
+        
         // Used by web site
-
-        private static string _UpdateStatus = "us";
-
-        private static string _UpdateUser = "uu";
+        private static string _UserUpdate = "uu";
 
         public static Command Login(string user, string hash)
         {
-            var command = new Command(_UpdateStatus);
+            Command.CallBack callback = (string result) => { Console.WriteLine(result); };
+            var command = new Command(_LoginSessionChallengeOrResponse, callback);
             command.AddArgument("user", user);
             command.AddArgument("uh", hash);
             return command;
