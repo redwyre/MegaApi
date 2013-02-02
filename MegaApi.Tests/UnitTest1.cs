@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MegaApi;
 using System.Linq;
 using System.Collections.Generic;
+using System.Configuration;
 
 namespace MegaApi.Tests
 {
@@ -51,9 +52,9 @@ namespace MegaApi.Tests
             return true;
         }
 
-        static readonly string TestUserName = "email@example.com";
-        static readonly string TestUserPass = "asdfgsasdfgt";
-        static readonly string TestUserHash = "asdasdgdfg";
+        static readonly string TestUserName = ConfigurationManager.AppSettings["TestUserName"];
+        static readonly string TestUserPass = ConfigurationManager.AppSettings["TestUserPass"];
+        static readonly string TestUserHash = ConfigurationManager.AppSettings["TestUserHash"];
 
         [TestMethod]
         public void Test_str_to_a32()
