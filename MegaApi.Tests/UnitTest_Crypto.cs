@@ -130,17 +130,6 @@ namespace MegaApi.Tests
             Assert.IsTrue(Utils.CompareTables(actual, expected));
         }
 
-        [TestMethod]
-        public void Test_mpi2b()
-        {
-            byte[] input = new byte[] { 0 };
-
-            uint[] expected = new uint[] { 0 };
-            uint[] actual = Crypto.mpi2b(input);
-
-            Assert.IsTrue(Utils.CompareTables(actual, expected));
-        }
-
         //[TestMethod]
         //public void Test_template()
         //{

@@ -50,6 +50,7 @@
     <Compile Include="Crypto.cs" />
     <Compile Include="Rsa.cs" />
     <Compile Include="Sjcl.cs" />
+    <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

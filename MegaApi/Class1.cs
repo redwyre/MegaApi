@@ -275,7 +275,7 @@ namespace MegaApi
                 }
                 else if (!string.IsNullOrEmpty(login.csid))
                 {
-                    uint[] t = Crypto.mpi2b(Crypto.base64urldecode(login.csid));
+                    uint[] t = Rsa.mpi2b(Crypto.base64urldecode(login.csid));
                     byte[] privk = Crypto.a32_to_str(Crypto.decrypt_key(aes, Crypto.base64_to_a32(login.privk)));
                     var rsa_privk = new uint[4][];
 
@@ -284,7 +284,7 @@ namespace MegaApi
                     for (i = 0; i < 4; ++i)
                     {
                         int l = ((privk[0] * 256 + privk[1] + 7) >> 3) + 2;
-                        rsa_privk[i] = Crypto.mpi2b(privk.Take(l).ToArray());
+                        rsa_privk[i] = Rsa.mpi2b(privk.Take(l).ToArray());
 
                         if (false) { break; } // number??
 

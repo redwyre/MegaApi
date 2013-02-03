@@ -126,10 +126,5 @@ namespace MegaApi
         {
             throw new NotImplementedException();
         }
-
-        public static uint[] mpi2b(byte[] p)
-        {
-            throw new NotImplementedException();
-        }
     }
 }
