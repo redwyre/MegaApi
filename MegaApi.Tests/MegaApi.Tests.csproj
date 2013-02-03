@@ -54,8 +54,13 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="Config.cs" />
     <Compile Include="UnitTest1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UnitTest_Crypto.cs" />
+    <Compile Include="UnitTest_Rsa.cs" />
+    <Compile Include="UnitTest_Hex.cs" />
+    <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MegaApi\MegaApi.csproj">

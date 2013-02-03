@@ -56,6 +56,18 @@ namespace MegaApi
             return a;
         }
 
+        public static uint[] str_to_a32(byte[] b)
+        {
+            var a = new uint[(b.Length + 3) >> 2];
+
+            for (var i = 0; i < b.Length; i++)
+            {
+                a[i >> 2] |= ((uint)b[i] << (24 - (i & 3) * 8));
+            }
+
+            return a;
+        }
+
         // array of 32-bit words to string (big endian)
         public static byte[] a32_to_str(uint[] a)
         {
@@ -90,6 +102,34 @@ namespace MegaApi
         {
             string ss = Convert.ToBase64String(bytes);
             return ss.Replace('+', '-').Replace('/', '_').Replace("=", "");
+        }
+
+        public static byte[] base64urldecode(string data)
+        {
+            data += "==".Substring((2 - data.Length * 3) & 3);
+            data = data.Replace('_', '/').Replace('-', '+').Replace(",", "");
+            return Convert.FromBase64String(data);
+        }
+
+
+        public static uint[] base64_to_a32(string s)
+        {
+            return str_to_a32(base64urldecode(s));
+        }
+
+        public static uint[] decrypt_key(Sjcl.Cipher.Aes aes, uint[] keyData)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static uint[] encrypt_key(Sjcl.Cipher.Aes aes, uint[] p)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static uint[] mpi2b(byte[] p)
+        {
+            throw new NotImplementedException();
         }
     }
 }

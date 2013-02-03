@@ -7,6 +7,7 @@ using System.Net;
 using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Diagnostics;
 
 namespace MegaApi
 {
@@ -51,7 +52,7 @@ namespace MegaApi
 
     public class Session
     {
-        public int SessionId;
+        public string SessionId;
         public int SequenceNumber;
 
         public static Uri ApiRequestUrl = new Uri("https://g.api.mega.co.nz/cs");
@@ -65,6 +66,10 @@ namespace MegaApi
         {
             UriBuilder ub = new UriBuilder(ApiRequestUrl);
             ub.Query += string.Format("id={0}", SequenceNumber);
+            if (!string.IsNullOrEmpty(SessionId))
+            {
+                ub.Query += string.Format("&sid={0}", SessionId);
+            }
             Uri uri = ub.Uri;
 
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(uri);
@@ -178,9 +183,23 @@ namespace MegaApi
 
     public class LoginResonse
     {
-        public string csid;
+        public string tsid; // null if csid is set
+        public string csid; // null if tsid is set
         public string privk; // private key
         public string k;
+    }
+
+    public class UserDetailsResponse
+    {
+        public string u;
+        public int s;
+        public string email;
+        public string name;
+        public string k;
+        public int c;
+        public string pubk;
+        public string privk;
+        public string ts;
     }
 
     public static class MakeCommand
@@ -217,12 +236,73 @@ namespace MegaApi
         // Used by web site
         private static readonly string _UserUpdate = "uu";
 
-        public static Command Login(string user, string hash)
+        public static Command Login(string user, string hash, uint[] passwordKey)
         {
             Command.SuccessCallBack successCallBack = (JToken result) =>
             {
-                LoginResonse l = result.ToObject<LoginResonse>();
-                Console.WriteLine(l);
+                // these need to be moved to session class
+                uint[] u_storage_k;
+                string u_storage_sid;
+                object u_storage_privk;
+
+
+                LoginResonse login = result.ToObject<LoginResonse>();
+                
+                var aes = new Sjcl.Cipher.Aes(passwordKey);
+
+                // decrypt master key
+                uint[] keyData = Crypto.base64_to_a32(login.k);
+                uint[] key = Crypto.decrypt_key(aes, keyData);
+
+
+                if (!string.IsNullOrEmpty(login.tsid))
+                {
+                    // untested
+                    byte[] t = Crypto.base64urldecode(login.tsid);
+
+                    Debug.Assert(t.Length == 32);
+
+                    byte[] t0 = t.Take(16).ToArray();
+                    byte[] t1 = t.Skip(16).Take(16).ToArray();
+
+                    byte[] bytes = Crypto.a32_to_str(Crypto.encrypt_key(aes, Crypto.str_to_a32(t0)));
+
+                    if (Enumerable.SequenceEqual(bytes, t1))
+                    {
+                        u_storage_k = key;
+                        u_storage_sid = login.tsid;
+                    }
+                }
+                else if (!string.IsNullOrEmpty(login.csid))
+                {
+                    uint[] t = Crypto.mpi2b(Crypto.base64urldecode(login.csid));
+                    byte[] privk = Crypto.a32_to_str(Crypto.decrypt_key(aes, Crypto.base64_to_a32(login.privk)));
+                    var rsa_privk = new uint[4][];
+
+                    // decompose private key
+                    int i;
+                    for (i = 0; i < 4; ++i)
+                    {
+                        int l = ((privk[0] * 256 + privk[1] + 7) >> 3) + 2;
+                        rsa_privk[i] = Crypto.mpi2b(privk.Take(l).ToArray());
+
+                        if (false) { break; } // number??
+
+                        privk = privk.Take(l).ToArray();
+                    }
+
+                    // check format
+                    if ((i == 4) && (privk.Length < 16))
+                    {
+                        // @@@ check remaining padding for added early wrong password detection likelihood
+                        u_storage_k = key;
+                        byte[] s = Hex.b2s(Rsa.RSAdecrypt(t, rsa_privk[2], rsa_privk[0], rsa_privk[1], rsa_privk[3]));
+                        u_storage_sid = Crypto.base64urlencode(s.Take(43).ToArray());
+                        u_storage_privk = rsa_privk;
+                    }
+                }
+
+                Console.WriteLine(login);
             };
             Command.ErrorCallBack errorCallBack = (Error result) =>
             {
@@ -239,6 +319,29 @@ namespace MegaApi
             var command = new Command(_LoginSessionChallengeOrResponse, successCallBack, errorCallBack);
             command.AddArgument("user", user);
             command.AddArgument("uh", hash);
+            return command;
+        }
+
+        public static Command GetUserDetails()
+        {
+            Command.SuccessCallBack successCallBack = (JToken result) =>
+            {
+                UserDetailsResponse userDetails = result.ToObject<UserDetailsResponse>();
+                Console.WriteLine(userDetails);
+            };
+            Command.ErrorCallBack errorCallBack = (Error result) =>
+            {
+                switch (result)
+                {
+                case Error.ESID:
+                    Console.WriteLine("Session ID is invalid");
+                    break;
+                default:
+                    Console.WriteLine(result);
+                    break;
+                }
+            };
+            var command = new Command(_GetUser, successCallBack, errorCallBack);
             return command;
         }
     }

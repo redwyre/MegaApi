@@ -45,8 +45,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Class1.cs" />
+    <Compile Include="Hex.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Crypto.cs" />
+    <Compile Include="Rsa.cs" />
     <Compile Include="Sjcl.cs" />
   </ItemGroup>
   <ItemGroup>
