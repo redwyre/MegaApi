@@ -117,14 +117,22 @@ namespace MegaApi
             return str_to_a32(base64urldecode(s));
         }
 
-        public static uint[] decrypt_key(Sjcl.Cipher.Aes aes, uint[] keyData)
+        public static uint[] encrypt_key(Sjcl.Cipher.Aes cipher, uint[] a)
         {
-            throw new NotImplementedException();
+            if (a.Length == 4) return cipher.Encrypt(a);
+
+            List<uint> x = new List<uint>();
+            for (var i = 0; i < a.Length; i += 4) x.AddRange(cipher.Encrypt(new uint[] { a[i], a[i + 1], a[i + 2], a[i + 3] }));
+            return x.ToArray();
         }
 
-        public static uint[] encrypt_key(Sjcl.Cipher.Aes aes, uint[] p)
+        public static uint[] decrypt_key(Sjcl.Cipher.Aes cipher, uint[] a)
         {
-            throw new NotImplementedException();
+            if (a.Length == 4) return cipher.Decrypt(a);
+
+            List<uint> x = new List<uint>();
+            for (var i = 0; i < a.Length; i += 4) x.AddRange(cipher.Decrypt(new uint[] { a[i], a[i + 1], a[i + 2], a[i + 3] }));
+            return x.ToArray();
         }
     }
 }

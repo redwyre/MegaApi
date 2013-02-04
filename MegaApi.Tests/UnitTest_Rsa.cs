@@ -7,20 +7,204 @@ namespace MegaApi.Tests
     [TestClass]
     public class UnitTest_Rsa
     {
+        [TestMethod]
+        public void Test_zclip()
+        {
+            uint[] input = new uint[]{0};
+
+            uint[] expected = new uint[] { 0 };
+            uint[] actual = Rsa.zclip(input);
+
+            Assert.IsTrue(Utils.CompareTables(actual, expected));
+        }
+
+        [TestMethod]
+        public void Test_nbits()
+        {
+            uint input = 0;
+
+            int expected = 0;
+            int actual = Rsa.nbits(input);
+
+            Assert.Equals(actual, expected);
+        }
+
+        [TestMethod]
+        public void Test_badd()
+        {
+            uint[] a = new uint[] { 0 };
+            uint[] b = new uint[] { 0 };
+
+            uint[] expected = new uint[] { 0 };
+            uint[] actual = Rsa.badd(a, b);
+
+            Assert.IsTrue(Utils.CompareTables(actual, expected));
+        }
+
+        [TestMethod]
+        public void Test_bsub()
+        {
+            uint[] a = new uint[] { 0 };
+            uint[] b = new uint[] { 0 };
+
+            uint[] expected = new uint[] { 0 };
+            uint[] actual = Rsa.bsub(a, b);
+
+            Assert.IsTrue(Utils.CompareTables(actual, expected));
+        }
+
+        [TestMethod]
+        public void Test_ip()
+        {
+            uint[] w = new uint[] { 0 };
+            uint n = 0;
+            uint x = 0;
+            uint y = 0;
+            uint c = 0;
+
+            uint expected = 0;
+            uint actual = Rsa.ip(w, n, x, y, c);
+            
+            Assert.Equals(expected, actual);
+        }
+
+        [TestMethod]
+        public void Test_bsqr()
+        {
+            uint[] x = new uint[] { 0 };
+
+            uint[] expected = new uint[] { 0 };
+            uint[] actual = Rsa.bsqr(x);
+
+            Assert.IsTrue(Utils.CompareTables(actual, expected));
+        }
+
+        [TestMethod]
+        public void Test_bmul()
+        {
+            uint[] x = new uint[] { 0 };
+            uint[] y= new uint[] { 0 };
+
+            uint[] expected = new uint[] { 0 };
+            uint[] actual = Rsa.bmul(x, y);
+
+            Assert.IsTrue(Utils.CompareTables(actual, expected));
+        }
+
+        [TestMethod]
+        public void Test_toppart()
+        {
+            uint[] x = new uint[] { 0 };
+            int start = 0;
+            int end = 0;
+
+            uint expected = 0;
+            uint actual = Rsa.toppart(x, start, end);
+
+            Assert.Equals(expected, actual);
+        }
+
+        [TestMethod]
+        public void Test_bdiv()
+        {
+            uint[] a = new uint[] { 0 };
+            uint[] b = new uint[] { 0 };
+
+            Rsa.QAndMod expected = new Rsa.QAndMod { q = new uint[] { 0 }, mod = new uint[] { 0 } };
+            Rsa.QAndMod actual = Rsa.bdiv(a, b);
+
+            Assert.Equals(expected, actual);
+        }
+
+        [TestMethod]
+        public void Test_simplemod()
+        {
+            uint[] i = new uint[] { 0 };
+            uint m = 0;
+
+            uint expected = 0;
+            uint actual = Rsa.simplemod(i, m);
+
+            Assert.Equals(expected, actual);
+        }
+
+        [TestMethod]
+        public void Test_bmod()
+        {
+            uint[] p = new uint[] { 0 };
+            uint[] m = new uint[] { 0 };
+
+            uint[] expected = new uint[] { 0 };
+            uint[] actual = Rsa.bmod(p, m);
+
+            Assert.IsTrue(Utils.CompareTables(actual, expected));
+        }
+
+        [TestMethod]
+        public void Test_bmod2()
+        {
+            uint[] x = new uint[] { 0 };
+            uint[] m = new uint[] { 0 };
+            uint[] mu = new uint[] { 0 };
+
+            uint[] expected = new uint[] { 0 };
+            uint[] actual = Rsa.bmod2(x, m, mu);
+
+            Assert.IsTrue(Utils.CompareTables(actual, expected));
+        }
+
+        [TestMethod]
+        public void Test_bexpmod()
+        {
+            uint[] g = new uint[] { 0 };
+            uint[] e = new uint[] { 0 };
+            uint[] m = new uint[] { 0 };
+
+            uint[] expected = new uint[] { 0 };
+            uint[] actual = Rsa.bexpmod(g, e, m);
+
+            Assert.IsTrue(Utils.CompareTables(actual, expected));
+        }
+
+        [TestMethod]
+        public void Test_bmodexp()
+        {
+            uint[] g = new uint[] { 0 };
+            uint[] e = new uint[] { 0 };
+            uint[] m = new uint[] { 0 };
+
+            uint[] expected = new uint[] { 0 };
+            uint[] actual = Rsa.bmodexp(g, e, m);
+
+            Assert.IsTrue(Utils.CompareTables(actual, expected));
+        }
+
+        [TestMethod]
+        public void Test_RSAencrypt()
+        {
+            uint[] s = new uint[] { 0 };
+            uint[] e = new uint[] { 0 };
+            uint[] m = new uint[] { 0 };
+
+            uint[] expected = new uint[] { 0 };
+            uint[] actual = Rsa.RSAencrypt(s, e, m);
+
+            Assert.IsTrue(Utils.CompareTables(actual, expected));
+        }
 
         [TestMethod]
         public void Test_RSAdecrypt()
         {
-            uint[] t = new uint[] { 1, 2, 3, 4 };
-            uint[] p1 = new uint[] { 1, 2, 3, 4 };
-            uint[] p2 = new uint[] { 1, 2, 3, 4 };
-            uint[] p3 = new uint[] { 1, 2, 3, 4 };
-            uint[] p4 = new uint[] { 1, 2, 3, 4 };
+            uint[] m = new uint[] { 1, 2, 3, 4 };
+            uint[] d = new uint[] { 1, 2, 3, 4 };
+            uint[] p = new uint[] { 1, 2, 3, 4 };
+            uint[] q = new uint[] { 1, 2, 3, 4 };
+            uint[] u = new uint[] { 1, 2, 3, 4 };
 
             uint[] expected = new uint[] { 0 };
-            uint[] actual = Rsa.RSAdecrypt(t, p1, p2, p3, p4);
+            uint[] actual = Rsa.RSAdecrypt(m, d, p, q, u);
 
-            Assert.IsTrue(Enumerable.SequenceEqual(actual, expected));
+            Assert.IsTrue(Utils.CompareTables(actual, expected));
         }
 
         [TestMethod]
@@ -34,5 +218,27 @@ namespace MegaApi.Tests
 
             Assert.IsTrue(Utils.CompareTables(actual, expected));
         }
+
+        //[TestMethod]
+        //public void Test_template()
+        //{
+        //    string input = "";
+
+        //    string expected = "";
+        //    string actual = "x";
+
+        //    Assert.AreEqual(actual, expected);
+        //}
+
+        //[TestMethod]
+        //public void Test_zclip()
+        //{
+        //    uint[] input = new uint[] { 0 };
+
+        //    uint[] expected = new uint[] { 0 };
+        //    uint[] actual = Rsa.zclip(input);
+
+        //    Assert.IsTrue(Utils.CompareTables(actual, expected));
+        //}
     }
 }

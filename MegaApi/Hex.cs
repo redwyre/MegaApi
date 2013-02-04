@@ -32,10 +32,7 @@ namespace MegaApi
             while (rn >= 0 && r[rn] == 0) rn--;
             for (int n = 0; n <= rn; n++)
             {
-                if (r[n] == 0)
-                    rr.Clear();
-                else
-                    rr.Insert(0, r[n]);
+                rr.Insert(0, r[n]);
             }
             return rr.ToArray();
         }

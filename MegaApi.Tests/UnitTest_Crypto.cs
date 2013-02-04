@@ -109,10 +109,10 @@ namespace MegaApi.Tests
         [TestMethod]
         public void Test_decrypt_key()
         {
-            var aes = new Sjcl.Cipher.Aes(Crypto.prepare_key_pw(Config.TestUserPass));
-            uint[] input = new uint[] {0};
+            var aes = new Sjcl.Cipher.Aes(Crypto.prepare_key_pw("test"));
+            uint[] input = new uint[] { 1, 2, 3, 4 };
 
-            uint[] expected = new uint[] { 0 };
+            uint[] expected = new uint[] { 0xB883134D, 0xEC125830, 0x128CA78E, 0x7542AF49 };
             uint[] actual = Crypto.decrypt_key(aes, input);
 
             Assert.IsTrue(Utils.CompareTables(actual, expected));
@@ -121,10 +121,10 @@ namespace MegaApi.Tests
         [TestMethod]
         public void Test_encrypt_key()
         {
-            var aes = new Sjcl.Cipher.Aes(Crypto.prepare_key_pw(Config.TestUserPass));
-            uint[] input = new uint[] { 0 };
+            var aes = new Sjcl.Cipher.Aes(Crypto.prepare_key_pw("test"));
+            uint[] input = new uint[] { 1, 2, 3, 4 };
 
-            uint[] expected = new uint[] { 0 };
+            uint[] expected = new uint[] { 0xF566288F, 0x3BBA60D6, 0xB6399871, 0x4D7A7973 };
             uint[] actual = Crypto.encrypt_key(aes, input);
 
             Assert.IsTrue(Utils.CompareTables(actual, expected));
