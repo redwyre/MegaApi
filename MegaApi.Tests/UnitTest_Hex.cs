@@ -12,7 +12,7 @@ namespace MegaApi.Tests
         {
             uint[] input = new uint[] { 1, 2, 3, 4 };
 
-            byte[] expected = new byte[] {(byte)'@'};
+            byte[] expected = new byte[] { 64, 0, 0, 3, 0, 0, 0, 32, 0, 0, 1 };
             byte[] actual = Hex.b2s(input);
 
             Assert.IsTrue(Enumerable.SequenceEqual(actual, expected));
