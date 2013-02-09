@@ -39,7 +39,7 @@ namespace MegaApi
             var n = r.Length;
             if (r[n - 1] != 0) return r;
             while (n > 1 && r[n - 1] == 0) n--;
-            return r.Take(n).ToArray();
+            return r.Slice(0,n);
         }
 
         // returns bit length of integer x
@@ -57,64 +57,61 @@ namespace MegaApi
 
         public static uint[] badd(uint[] a, uint[] b)
         {
-            //var al=a.length;
-            //var bl=b.length;
+            var al = a.Length;
+            var bl = b.Length;
 
-            //if(al < bl) return badd(b,a);
+            if (al < bl) return badd(b, a);
 
-            //var r=new Array(al);
-            //var c=0, n=0;
+            var r = new uint[al];
+            uint c = 0, n = 0;
 
-            //for(; n<bl; n++)
-            //{
-            // c+=a[n]+b[n];
-            // r[n]=c & bm;
-            // c>>>=bs;
-            //}
-            //for(; n<al; n++)
-            //{
-            // c+=a[n];
-            // r[n]=c & bm;
-            // c>>>=bs;
-            //}
-            //if(c) r[n]=c;
-            //return r;
-
-            return new uint[] { };
+            for (; n < bl; n++)
+            {
+                c += a[n] + b[n];
+                r[n] = (uint)(c & bm);
+                c >>= bs;
+            }
+            for (; n < al; n++)
+            {
+                c += a[n];
+                r[n] = (uint)(c & bm);
+                c >>= bs;
+            }
+            if (c != 0) r[n] = c;
+            return r;
         }
 
         public static uint[] bsub(uint[] a, uint[] b)
         {
-            // var al=a.length;
-            // var bl=b.length;
+            var al = a.Length;
+            var bl = b.Length;
 
-            // if(bl > al) return [];
-            // if(bl == al)
-            // {
-            //  if(b[bl-1] > a[bl-1]) return [];
-            //  if(bl==1) return [a[0]-b[0]];
-            // }
+            if (bl > al) return new uint[] { };
+            if (bl == al)
+            {
+                if (b[bl - 1] > a[bl - 1]) return new uint[] { };
+                if (bl == 1) return new uint[] { a[0] - b[0] };
+            }
 
-            // var r=new Array(al);
-            // var c=0;
+            var r = new uint[al];
+            uint c = 0;
 
-            // for(var n=0; n<bl; n++)
-            // {
-            //  c+=a[n]-b[n];
-            //  r[n]=c & bm;
-            //  c>>=bs;
-            // }
-            // for(;n<al; n++)
-            // {
-            //  c+=a[n];
-            //  r[n]=c & bm;
-            //  c>>=bs;
-            // }
-            // if(c) return [];
+            int n;
+            for (n = 0; n < bl; n++)
+            {
+                c += a[n] - b[n];
+                r[n] = (uint)(c & bm);
+                c >>= bs;
+            }
+            for (; n < al; n++)
+            {
+                c += a[n];
+                r[n] = (uint)(c & bm);
+                c >>= bs;
+            }
+            if (c != 0) return new uint[] { };
 
-            // return zclip(r);            
-
-            return new uint[] { };
+            return zclip(r);
         }
 
         public static uint ip(uint[] w, uint n, uint x, uint y, uint c)
@@ -161,7 +158,7 @@ namespace MegaApi
         {
             var n = x.Length;
             var t = y.Length;
-            var r = new uint[n + t - 1];
+            var r = new uint[n + t];
             uint c, i, j;
 
             for (i = 0; i < t; i++)
@@ -177,10 +174,10 @@ namespace MegaApi
             return zclip(r);
         }
 
-        public static uint toppart(uint[] x, int start, int len)
+        public static ulong toppart(uint[] x, int start, int len)
         {
-            uint n = 0;
-            while (start >= 0 && len-- > 0) n = (uint)(n * bx2 + x[start--]);
+            ulong n = 0;
+            while (start >= 0 && len-- > 0) n = n * (ulong)bx2 + x[start--];
             return n;
         }
 
@@ -241,7 +238,7 @@ namespace MegaApi
             int j;
             uint[] x2;
             var q = new uint[nmt + 1];
-            var y2 = Utils.ArrayConcat(new uint[nmt], y);
+            var y2 = new uint[nmt].Concat(y);
             for (; ; )
             {
                 x2 = bsub(x, y2);
@@ -264,7 +261,7 @@ namespace MegaApi
                 while (q[m] * top > topx) q[m]--;
 
                 //x-=q[m]*y*b^m
-                y2 = y2.Skip(1).ToArray();
+                y2 = y2.Slice(1);
                 x2 = bsub(x, bmul(new uint[] { q[m] }, y2));
                 if (x2.Length == 0)
                 {
@@ -312,32 +309,31 @@ namespace MegaApi
 
         public static uint[] bmod2(uint[] x, uint[] m, uint[] mu)
         {
-            //var xl=x.Length - (m.Length << 1);
-            //if(xl > 0) return bmod2(x.slice(0,xl).concat(bmod2(x.slice(xl),m,mu)),m,mu);
+            var xl = x.Length - (m.Length << 1);
+            if (xl > 0) return bmod2(x.Slice(0, xl).Concat(bmod2(x.Slice(xl), m, mu)), m, mu);
 
-            //var ml1=m.Length+1, ml2=m.Length-1,rr;
-            ////var q1=x.slice(ml2)
-            ////var q2=bmul(q1,mu)
-            //var q3=bmul(x.slice(ml2),mu).slice(ml1);
-            //var r1=x.slice(0,ml1);
-            //var r2=bmul(q3,m).slice(0,ml1);
-            //var r=bsub(r1,r2);
+            int ml1 = m.Length + 1, ml2 = m.Length - 1;
+            uint[] rr;
+            //var q1=x.slice(ml2)
+            //var q2=bmul(q1,mu)
+            var q3 = bmul(x.Slice(ml2), mu).Slice(ml1);
+            var r1 = x.Slice(0, ml1);
+            var r2 = bmul(q3, m).Slice(0, ml1);
+            var r = bsub(r1, r2);
 
-            //if(r.Length==0)
-            //{
-            // r1[ml1]=1;
-            // r=bsub(r1,r2);
-            //}
-            //for(var n=0;;n++)
-            //{
-            // rr=bsub(r,m);
-            // if(rr.Length==0) break;
-            // r=rr;
-            // if(n>=3) return bmod2(r,m,mu);
-            //}
-            //return r;
-
-            return new uint[] { };
+            if (r.Length == 0)
+            {
+                r1[ml1] = 1;
+                r = bsub(r1, r2);
+            }
+            for (var n = 0; ; n++)
+            {
+                rr = bsub(r, m);
+                if (rr.Length == 0) break;
+                r = rr;
+                if (n >= 3) return bmod2(r, m, mu);
+            }
+            return r;
         }
 
         // Modular exponentiation, HAC Algorithm 14.79
@@ -445,11 +441,11 @@ namespace MegaApi
                 {
                     bn = 1;
                     ++rn;
-                    Utils.EnsureSize(r, rn);
+                    Utils.EnsureIndex(r, rn);
                     r[rn] = 0;
                 }
 
-                if ((c & sb) != 0) { Utils.EnsureSize(r, rn); r[rn] |= bn; }
+                if ((c & sb) != 0) { Utils.EnsureIndex(r, rn); r[rn] |= bn; }
 
                 bn <<= 1;
             }

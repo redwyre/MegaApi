@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
 namespace MegaApi
 {
-    public class Utils
+    public static class Utils
     {
-        public static void EnsureSize<T>(List<T> list, int count)
+        public static void EnsureIndex<T>(List<T> list, int count)
         {
             while (list.Count <= count)
             {
@@ -15,13 +16,37 @@ namespace MegaApi
             }
         }
 
-
-        public static T[] ArrayConcat<T>(T[] a1, T[] a2)
+        public static T[] Slice<T>(this T[] array, int begin, int end)
         {
-            T[] r = new T[a1.Length + a2.Length];
-            Array.Copy(a1, 0, r, 0, a1.Length);
-            Array.Copy(a2, 0, r, a1.Length, a2.Length);
-            return r;
+            if (begin > end) throw new Exception();
+
+            if (begin < 0)
+            {
+                begin = array.Length + begin;
+            }
+
+            if (end < 0)
+            {
+                end = array.Length + end;
+            }
+
+            int elements = end - begin;
+            T[] ret = new T[elements];
+            Array.Copy(array, begin, ret, 0, elements);
+            return ret;
+        }
+
+        public static T[] Slice<T>(this T[] array, int begin)
+        {
+            return Slice<T>(array, begin, array.Length);
+        }
+
+        public static T[] Concat<T>(this T[] array, T[] other)
+        {
+            T[] ret = new T[array.Length + other.Length];
+            Array.Copy(array, 0, ret, 0, array.Length);
+            Array.Copy(other, 0, ret, array.Length, other.Length);
+            return ret; 
         }
     }
 }
