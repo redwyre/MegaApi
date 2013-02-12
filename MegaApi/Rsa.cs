@@ -255,7 +255,7 @@ namespace MegaApi
                 var m = i - t - 1;
                 if (i >= x.Length) q[m] = 1;
                 else if (x[i] == yt) q[m] = (uint)bm;
-                else q[m] = (uint)Math.Floor(toppart(x, i, 2) / (double)yt);
+                else q[m] = (uint)((double)toppart(x, i, 2) / (double)yt);
 
                 var topx = toppart(x, i, 3);
                 while (q[m] * top > topx) q[m]--;
